@@ -28,6 +28,7 @@ a) checkpoints folder:
 Contains 4 trained models for vehicle exterior shape generation.
 b) models_3D_obj folder:
 Vehicle exterior 3D dataset in .obj format.
+https://drive.google.com/file/d/1ycDRq9_Oflg1d-6r7j4Fn-as5WTvc_RR/view?usp=drive_link
 c) models_labels_npy folder:
 Vehicle label files, input conditions processed as 2048x3 in .npy format.
 d) model_pointcloud_npy folder:

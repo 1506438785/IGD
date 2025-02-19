@@ -24,7 +24,6 @@ discriminator.eval()
 
 # 把文件名作为一个变量
 filename = "gd00105.npy"
-# 假设你的文件路径是 pre_data/data_label/label
 file_path = "models_labels_npy"
 
 # 使用 os.path.join 来拼接路径
