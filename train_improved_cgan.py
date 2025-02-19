@@ -1,6 +1,6 @@
 import logging
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 import numpy as np
 import os
 import torch.optim as optim
@@ -12,6 +12,7 @@ from datetime import datetime
 from models import Generator, Discriminator, combined_loss
 
 
+# Define the dataset class
 class PointCloudDataset(Dataset):
     def __init__(self, file_paths, label_paths):
         self.file_paths = file_paths
@@ -29,25 +30,43 @@ class PointCloudDataset(Dataset):
 
         return data_tensor, label_tensor
 
+# Function to get npy file paths
 def get_npy_files(folder_path):
     file_paths = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.npy')]
     return file_paths
 
-folder_path = 'pre_data/data_npy/anjing'
-label_path = 'pre_data/data_label/label'
+# Folder paths for data and labels
+folder_path = 'models_pointcloud_npy'
+label_path = 'models_labels_npy'
 
+# Get file paths
 file_paths = get_npy_files(folder_path)
 label_paths = get_npy_files(label_path)
 
+# Initialize the dataset
 dataset = PointCloudDataset(file_paths, label_paths)
-data_loader = DataLoader(dataset, batch_size=27, shuffle=True)
+
+# Calculate split sizes (80% train, 10% validation, 10% test)
+train_size = int(0.8 * len(dataset))
+val_size = int(0.1 * len(dataset))
+test_size = len(dataset) - train_size - val_size
+
+# Split the dataset
+train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
+
+# Create DataLoaders for each split
+train_loader = DataLoader(train_dataset, batch_size=27, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=27, shuffle=False)
+test_loader = DataLoader(test_dataset, batch_size=27, shuffle=False)
+
+
 
 # 超参数
 lr = 0.0002
 b1 = 0.5
 b2 = 0.999
 latent_dim = 100
-epochs = 6000
+epochs = 7000
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -76,7 +95,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger()
 
 for epoch in range(epochs):
-    for i, (real_point_clouds, labels) in enumerate(data_loader):
+
+    for i, (real_point_clouds, labels) in enumerate(train_loader):
         batch_size = real_point_clouds.size(0)
         valid = torch.ones(batch_size, 1).to(device)
         fake = torch.zeros(batch_size, 1).to(device)
@@ -101,6 +121,23 @@ for epoch in range(epochs):
 
         d_loss.backward()
         optimizer_D.step()
+        # 在每个epoch结束后进行验证
+
+    with torch.no_grad():  # 在验证过程中不需要计算梯度
+        val_loss = 0
+        for i, (real_point_clouds, labels) in enumerate(val_loader):
+            real_point_clouds = real_point_clouds.to(device)
+            labels = labels.to(device)
+
+            z = torch.randn(real_point_clouds.size(0), latent_dim).to(device)
+            gen_point_clouds = generator(z, labels)
+            val_loss += combined_loss(real_point_clouds, gen_point_clouds)
+
+        val_loss /= len(val_loader)  # 计算平均验证损失
+
+        print(f"Epoch [{epoch}/{epochs}], Validation Loss: {val_loss.item()}")
+
+
 
     if epoch % 500 == 0:
         dbest_save_path = os.path.join(checkpoint_dir, f'dbest_model_{epoch}.pth')
@@ -108,6 +145,25 @@ for epoch in range(epochs):
         torch.save(discriminator.state_dict(), dbest_save_path)
         torch.save(generator.state_dict(), gbest_save_path)
     if epoch % 10 == 0:
-        log_message = f"[Epoch {epoch}/{epochs}] [Batch {i}/{len(data_loader)}] [D loss: {d_loss.item()}] [G loss: {g_loss.item()}]"
+        log_message = (
+            f"Epoch [{epoch}/{epochs}], Training D loss: {d_loss.item()}, G loss: {g_loss.item()}, Validation Loss: {val_loss.item()}")
         print(log_message)
         logger.info(log_message)
+
+with torch.no_grad():  # 在验证过程中不需要计算梯度
+    test_loss = 0
+    for i, (real_point_clouds, labels) in enumerate(test_loader):
+        real_point_clouds = real_point_clouds.to(device)
+        labels = labels.to(device)
+
+        z = torch.randn(real_point_clouds.size(0), latent_dim).to(device)
+        gen_point_clouds = generator(z, labels)
+        val_loss += combined_loss(real_point_clouds, gen_point_clouds)
+
+    test_loss /= len(test_loader)  # 计算平均验证损失
+
+    print(f" Validation Loss: {test_loss.item()}")
+    log_message = (
+        f"Validation Loss: {test_loss.item()}")
+    print(log_message)
+    logger.info(log_message)
