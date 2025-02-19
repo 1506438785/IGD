@@ -24,17 +24,15 @@ pip install -r requirements.txt
 ```
 ### 3. Folder Structure and Contents:
 - The project contains the following folders and files:
-- a) checkpoints folder:
-- Contains 4 trained models for vehicle exterior shape generation.
-- b) models_3D_obj folder:
+- a) models_3D_obj folder:
 - Vehicle exterior 3D dataset in .obj format.
 - https://drive.google.com/file/d/1ycDRq9_Oflg1d-6r7j4Fn-as5WTvc_RR/view?usp=drive_link
-- c) models_labels_npy folder:
+- b) models_labels_npy folder:
 - Vehicle label files, input conditions processed as 2048x3 in .npy format.
-- d) model_pointcloud_npy folder:
+- c) model_pointcloud_npy folder:
 - Vehicle point cloud data, sampled at 2048x3 in .npy format.
-### 4. Scripts:
 
+### 4. Scripts:
 a) Training Script:
 Run the following command to train the model:
 ```bash
