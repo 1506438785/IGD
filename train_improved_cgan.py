@@ -4,12 +4,19 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import numpy as np
 import os
 import torch.optim as optim
-import torch.nn as nn
-from scipy.spatial import distance_matrix
-from scipy.stats import wasserstein_distance
 from datetime import datetime
-
 from models import Generator, Discriminator, combined_loss
+
+# Folder paths for data and labels
+folder_path = 'models_pointcloud_npy'
+label_path = 'models_labels_npy'
+# 超参数
+lr = 0.0002
+b1 = 0.5
+b2 = 0.999
+latent_dim = 100
+epochs = 7000
+
 
 
 # Define the dataset class
@@ -35,9 +42,6 @@ def get_npy_files(folder_path):
     file_paths = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.npy')]
     return file_paths
 
-# Folder paths for data and labels
-folder_path = 'models_pointcloud_npy'
-label_path = 'models_labels_npy'
 
 # Get file paths
 file_paths = get_npy_files(folder_path)
@@ -59,14 +63,6 @@ train_loader = DataLoader(train_dataset, batch_size=27, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=27, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=27, shuffle=False)
 
-
-
-# 超参数
-lr = 0.0002
-b1 = 0.5
-b2 = 0.999
-latent_dim = 100
-epochs = 7000
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
