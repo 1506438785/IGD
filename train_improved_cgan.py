@@ -7,7 +7,6 @@ import torch.optim as optim
 from datetime import datetime
 from models import Generator, Discriminator, combined_loss
 
-# Folder paths for data and labels
 folder_path = 'models_pointcloud_npy'
 label_path = 'models_labels_npy'
 # 超参数
@@ -15,11 +14,8 @@ lr = 0.0002
 b1 = 0.5
 b2 = 0.999
 latent_dim = 100
-epochs = 7000
+epochs = 10000
 
-
-
-# Define the dataset class
 class PointCloudDataset(Dataset):
     def __init__(self, file_paths, label_paths):
         self.file_paths = file_paths
@@ -43,6 +39,7 @@ def get_npy_files(folder_path):
     return file_paths
 
 
+
 # Get file paths
 file_paths = get_npy_files(folder_path)
 label_paths = get_npy_files(label_path)
@@ -62,6 +59,9 @@ train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, va
 train_loader = DataLoader(train_dataset, batch_size=27, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=27, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=27, shuffle=False)
+
+
+# Now you can train the model using `train_loader`, `val_loader`, and `test_loader`
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -154,12 +154,9 @@ with torch.no_grad():  # 在验证过程中不需要计算梯度
 
         z = torch.randn(real_point_clouds.size(0), latent_dim).to(device)
         gen_point_clouds = generator(z, labels)
-        val_loss += combined_loss(real_point_clouds, gen_point_clouds)
+        test_loss += combined_loss(real_point_clouds, gen_point_clouds)
 
     test_loss /= len(test_loader)  # 计算平均验证损失
-
-    print(f" Validation Loss: {test_loss.item()}")
-    log_message = (
-        f"Validation Loss: {test_loss.item()}")
+    log_message = f"Test Loss: {test_loss.item()}"
     print(log_message)
     logger.info(log_message)
