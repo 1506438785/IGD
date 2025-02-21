@@ -36,10 +36,10 @@ pip install -r requirements.txt
 a) Training Script:
 Run the following command to train the model:
 ```bash
-python run train_improved_cgan.py
+python train_improved_cgan.py
 ```
 b) Conditional Generation Script:
 Run the following command for conditional generation:
 ```bash
-python run test_improved_cgan.py
+python test_improved_cgan.py
 ```
